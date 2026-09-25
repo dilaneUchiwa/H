@@ -9,3 +9,7 @@ venv/
 *.egg-info/
 .pytest_cache/
 .DS_Store
+
+# Vendorisé par le Dockerfile au moment du build (curl vers unpkg), jamais
+# commité : évite d'avoir deux sources de vérité pour cette dépendance.
+static/js/vendor/vue.global.prod.js

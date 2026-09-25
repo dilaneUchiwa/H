@@ -4,11 +4,15 @@
  * pour que l'écran reste utilisable même sans liaison serveur.
  */
 
-const CACHE_COQUILLE = "sihl-shell-v1";
+const CACHE_COQUILLE = "sihl-shell-v2";
 const FICHIERS_COQUILLE = [
     "/",
     "/static/css/app.css",
     "/static/js/app.js",
+    "/static/js/api.js",
+    "/static/js/pages.js",
+    "/static/js/configs.js",
+    "/static/js/screens.js",
     "/static/js/sync.js",
     "/static/js/vendor/vue.global.prod.js",
     "/static/manifest.webmanifest",

@@ -1,6 +1,12 @@
 from django.contrib import admin
 from django.urls import include, path
+from django.views.decorators.csrf import ensure_csrf_cookie
 from django.views.generic import TemplateView
+
+# ensure_csrf_cookie : la PWA est une page unique sans <form> Django, donc
+# aucun {% csrf_token %} n'est rendu nulle part ; sans ce décorateur le
+# cookie csrftoken n'existe jamais et le premier POST (connexion) échoue.
+coquille_pwa = ensure_csrf_cookie(TemplateView.as_view(template_name="index.html"))
 
 urlpatterns = [
     path("admin/", admin.site.urls),
@@ -14,5 +20,5 @@ urlpatterns = [
     path("api/", include("sihl.hospitalisation.urls")),
     path("api/", include("sihl.facturation.urls")),
     path("api/", include("sihl.rapports.urls")),
-    path("", TemplateView.as_view(template_name="index.html"), name="pwa-shell"),
+    path("", coquille_pwa, name="pwa-shell"),
 ]

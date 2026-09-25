@@ -113,8 +113,18 @@ STATICFILES_DIRS = [BASE_DIR / "static"]
 STORAGES = {
     "staticfiles": {"BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage"},
 }
+# .webmanifest est absent de la table interne de WhiteNoise : sans ceci le
+# fichier est servi en application/octet-stream et les navigateurs
+# ignorent le manifeste PWA silencieusement (pas d'erreur, juste pas d'install).
+WHITENOISE_MIMETYPES = {".webmanifest": "application/manifest+json"}
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+
+# Render (et tout hébergeur derrière un reverse proxy) termine le TLS en
+# amont : sans ceci Django croit chaque requête non chiffrée (redirections
+# et cookies secure cassés) malgré le HTTPS réel côté navigateur.
+SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+CSRF_TRUSTED_ORIGINS = env.list("CSRF_TRUSTED_ORIGINS", default=["https://*.onrender.com"])
 
 REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": [
