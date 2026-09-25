@@ -1,0 +1,9 @@
+{
+    "name": "SIHL — Système d'Information Hospitalier Léger",
+    "short_name": "SIHL",
+    "start_url": "/",
+    "display": "standalone",
+    "background_color": "#f4f4f4",
+    "theme_color": "#0b6e4f",
+    "icons": []
+}

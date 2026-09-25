@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1" />
+    <title>SIHL — Système d'Information Hospitalier Léger</title>
+    <link rel="manifest" href="/static/manifest.webmanifest" />
+    <link rel="stylesheet" href="/static/css/app.css" />
+    <meta name="theme-color" content="#0b6e4f" />
+</head>
+<body>
+    <div id="app"></div>
+
+    <!-- Vue 3, sans étape de compilation lourde (chapitre 4.1) — vendorisé
+         localement, jamais chargé depuis un CDN externe (principe d'autonomie). -->
+    <script src="/static/js/vendor/vue.global.prod.js"></script>
+    <script src="/static/js/sync.js"></script>
+    <script src="/static/js/app.js"></script>
+    <script>
+        if ("serviceWorker" in navigator) {
+            window.addEventListener("load", () => {
+                navigator.serviceWorker.register("/static/js/service-worker.js");
+            });
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,36 @@
+:root {
+    --sihl-vert: #0b6e4f;
+    --sihl-rouge: #b3261e;
+    --sihl-gris: #f4f4f4;
+}
+
+body {
+    margin: 0;
+    font-family: system-ui, -apple-system, sans-serif;
+    background: var(--sihl-gris);
+}
+
+.bandeau-connexion {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    display: flex;
+    justify-content: space-between;
+    padding: 0.5rem 1rem;
+    color: #fff;
+    font-size: 0.9rem;
+}
+
+.bandeau-connexion.en-ligne {
+    background: var(--sihl-vert);
+}
+
+.bandeau-connexion.hors-ligne {
+    background: var(--sihl-rouge);
+}
+
+.contenu {
+    padding: 1rem;
+    max-width: 960px;
+    margin: 0 auto;
+}
