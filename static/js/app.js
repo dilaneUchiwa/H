@@ -167,6 +167,13 @@ const AppSIHL = {
             return "SIHL";
         });
 
+        const initialesUtilisateur = computed(() => {
+            if (!utilisateur.value) return "";
+            const { first_name: prenom, last_name: nom, username } = utilisateur.value;
+            if (prenom || nom) return `${(prenom || "")[0] || ""}${(nom || "")[0] || ""}`.toUpperCase();
+            return (username || "?").slice(0, 2).toUpperCase();
+        });
+
         return {
             utilisateur,
             chargementAuth,
@@ -178,6 +185,7 @@ const AppSIHL = {
             composantPage,
             configCrud,
             titrePage,
+            initialesUtilisateur,
         };
     },
     template: `
@@ -191,8 +199,11 @@ const AppSIHL = {
             <div class="mise-en-page" :class="{ 'mise-en-page--menu-ouvert': menuMobileOuvert }">
                 <aside class="barre-laterale">
                     <div class="barre-laterale__entete">
-                        <span class="barre-laterale__logo">SIHL</span>
-                        <span class="barre-laterale__soustitre">Système Info. Hospitalier Léger</span>
+                        <span class="barre-laterale__marque">S</span>
+                        <div>
+                            <span class="barre-laterale__logo">SIHL</span>
+                            <span class="barre-laterale__soustitre">Système Info. Hospitalier Léger</span>
+                        </div>
                     </div>
                     <nav class="barre-laterale__nav">
                         <div v-for="groupe in groupes" :key="groupe.titre" class="nav-groupe">
@@ -217,6 +228,7 @@ const AppSIHL = {
                         <button class="btn-menu-mobile" @click="menuMobileOuvert = !menuMobileOuvert">☰</button>
                         <h2 class="entete-app__titre">{{ titrePage }}</h2>
                         <div class="entete-app__utilisateur">
+                            <span class="avatar">{{ initialesUtilisateur }}</span>
                             <span>{{ utilisateur.first_name || utilisateur.username }}</span>
                             <button class="btn btn--discret btn--mini" @click="deconnexion">Déconnexion</button>
                         </div>

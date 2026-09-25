@@ -2,6 +2,11 @@
  * Configuration des pages CRUD génériques, une par entité du domaine
  * (chapitre 3.5). Regroupées par module M1-M8 dans la barre latérale
  * (voir app.js) pour suivre l'ordre du circuit patient (chapitre 5.1).
+ *
+ * Les champs qui référencent une autre entité (patient, épisode, lot…)
+ * utilisent `type: "recherche"` : un sélecteur avec recherche remplace la
+ * saisie d'un ID numérique brut, à la fois dans les formulaires et dans
+ * l'affichage des tableaux (`colonnes[].fk`).
  */
 
 function dateCourte(v) {
@@ -12,6 +17,41 @@ function dateHeureCourte(v) {
 }
 function montant(v) {
     return v !== undefined && v !== null ? `${Number(v).toLocaleString("fr-FR")} FCFA` : "—";
+}
+
+// Libellés lisibles pour chaque entité référencée en tant que clé étrangère,
+// partagés entre les sélecteurs de formulaire et les colonnes de tableau.
+const LIBELLES_FK = {
+    patient: (p) => `${p.ipp} — ${p.nom} ${p.prenom}`,
+    episode: (e) => `${e.numero}`,
+    consultation: (c) => `Consultation du ${dateHeureCourte(c.date)} — ${c.motif}`,
+    prescription: (p) => `Prescription #${p.id} (${p.statut})`,
+    ligne_prescription: (l) => `${l.libelle_produit} × ${l.quantite}`,
+    medicament: (m) => `${m.nom}${m.dosage ? " (" + m.dosage + ")" : ""}`,
+    lot: (l) => `Lot ${l.numero_lot} — péremption ${dateCourte(l.date_peremption)}`,
+    examen: (e) => `Examen #${e.id} (${e.statut})`,
+    catalogue: (c) => `${c.code} — ${c.libelle}`,
+    tarif: (t) => `${t.code} — ${t.libelle} (${montant(t.montant)})`,
+    service: (s) => `${s.code} — ${s.nom}`,
+    lit: (l) => `${l.numero} (${l.statut})`,
+    sejour: (s) => `Séjour #${s.id}`,
+};
+
+function champRecherche(cle, label, endpoint, cleLibelle, options = {}) {
+    return {
+        cle,
+        label,
+        type: "recherche",
+        endpoint,
+        labelFn: LIBELLES_FK[cleLibelle],
+        requis: options.requis !== false,
+        parametreRecherche: options.parametreRecherche || "",
+        placeholder: options.placeholder || "Rechercher…",
+    };
+}
+
+function colonneFk(cle, label, endpoint, cleLibelle) {
+    return { cle, label, fk: { endpoint, labelFn: LIBELLES_FK[cleLibelle] } };
 }
 
 window.SIHLConfigs = {
@@ -54,14 +94,14 @@ window.SIHLConfigs = {
         endpoint: "/episodes/",
         colonnes: [
             { cle: "numero", label: "Numéro" },
-            { cle: "patient", label: "ID Patient" },
+            colonneFk("patient", "Patient", "/patients/", "patient"),
             { cle: "type_episode", label: "Type", badge: true },
             { cle: "statut", label: "Statut", badge: true },
             { cle: "montant_du", label: "Dû", format: montant },
             { cle: "montant_paye", label: "Payé", format: montant },
         ],
         champs: [
-            { cle: "patient", label: "ID Patient (voir page Patients)", type: "number", requis: true },
+            champRecherche("patient", "Patient", "/patients/", "patient", { parametreRecherche: "q" }),
             {
                 cle: "type_episode",
                 label: "Type",
@@ -82,13 +122,13 @@ window.SIHLConfigs = {
         description: "Triage, anamnèse, examen, conclusion — historique complet par épisode.",
         endpoint: "/consultations/",
         colonnes: [
-            { cle: "episode", label: "ID Épisode" },
+            colonneFk("episode", "Épisode", "/episodes/", "episode"),
             { cle: "date", label: "Date", format: dateHeureCourte },
             { cle: "motif", label: "Motif" },
             { cle: "conclusion", label: "Conclusion" },
         ],
         champs: [
-            { cle: "episode", label: "ID Épisode", type: "number", requis: true },
+            champRecherche("episode", "Épisode", "/episodes/", "episode"),
             { cle: "motif", label: "Motif", requis: true },
             { cle: "temperature_c", label: "Température (°C)", type: "number" },
             { cle: "tension_arterielle_systolique", label: "TA systolique", type: "number" },
@@ -106,12 +146,12 @@ window.SIHLConfigs = {
         description: "Doivent rester visibles dans tout le dossier patient.",
         endpoint: "/allergies/",
         colonnes: [
-            { cle: "patient", label: "ID Patient" },
+            colonneFk("patient", "Patient", "/patients/", "patient"),
             { cle: "libelle", label: "Allergie" },
             { cle: "severite", label: "Sévérité", badge: true },
         ],
         champs: [
-            { cle: "patient", label: "ID Patient", type: "number", requis: true },
+            champRecherche("patient", "Patient", "/patients/", "patient", { parametreRecherche: "q" }),
             { cle: "libelle", label: "Allergie", requis: true },
             {
                 cle: "severite",
@@ -144,11 +184,11 @@ window.SIHLConfigs = {
         description: "Ordonnance DCI (médicaments) et examens de laboratoire.",
         endpoint: "/prescriptions/",
         colonnes: [
-            { cle: "consultation", label: "ID Consultation" },
+            colonneFk("consultation", "Consultation", "/consultations/", "consultation"),
             { cle: "date", label: "Date", format: dateHeureCourte },
             { cle: "statut", label: "Statut", badge: true },
         ],
-        champs: [{ cle: "consultation", label: "ID Consultation", type: "number", requis: true }],
+        champs: [champRecherche("consultation", "Consultation", "/consultations/", "consultation")],
     },
 
     lignesPrescription: {
@@ -156,14 +196,14 @@ window.SIHLConfigs = {
         description: "Détail par prescription : médicament ou examen, quantité.",
         endpoint: "/lignes-prescription/",
         colonnes: [
-            { cle: "prescription", label: "ID Prescription" },
+            colonneFk("prescription", "Prescription", "/prescriptions/", "prescription"),
             { cle: "type_ligne", label: "Type", badge: true },
             { cle: "libelle_produit", label: "Produit" },
             { cle: "quantite", label: "Qté" },
             { cle: "honoree", label: "Honorée", format: (v) => (v ? "Oui" : "Non") },
         ],
         champs: [
-            { cle: "prescription", label: "ID Prescription", type: "number", requis: true },
+            champRecherche("prescription", "Prescription", "/prescriptions/", "prescription"),
             {
                 cle: "type_ligne",
                 label: "Type",
@@ -174,8 +214,12 @@ window.SIHLConfigs = {
                     { value: "EXAMEN", label: "Examen de laboratoire" },
                 ],
             },
-            { cle: "medicament", label: "ID Médicament (si médicament)", type: "number" },
-            { cle: "examen", label: "ID Examen catalogue (si examen)", type: "number" },
+            champRecherche("medicament", "Médicament (si type = médicament)", "/medicaments/", "medicament", {
+                requis: false,
+            }),
+            champRecherche("examen", "Examen du catalogue (si type = examen)", "/catalogue-examens/", "catalogue", {
+                requis: false,
+            }),
             { cle: "posologie", label: "Posologie" },
             { cle: "quantite", label: "Quantité", type: "number", requis: true },
         ],
@@ -201,14 +245,19 @@ window.SIHLConfigs = {
         description: "Suivi des examens prescrits jusqu'à validation du résultat.",
         endpoint: "/examens-labo/",
         colonnes: [
-            { cle: "ligne_prescription", label: "ID Ligne prescription" },
-            { cle: "catalogue", label: "ID Examen" },
+            colonneFk("ligne_prescription", "Ligne de prescription", "/lignes-prescription/", "ligne_prescription"),
+            colonneFk("catalogue", "Examen", "/catalogue-examens/", "catalogue"),
             { cle: "statut", label: "Statut", badge: true },
             { cle: "demande_le", label: "Demandé le", format: dateHeureCourte },
         ],
         champs: [
-            { cle: "ligne_prescription", label: "ID Ligne de prescription", type: "number", requis: true },
-            { cle: "catalogue", label: "ID Examen (catalogue)", type: "number", requis: true },
+            champRecherche(
+                "ligne_prescription",
+                "Ligne de prescription",
+                "/lignes-prescription/",
+                "ligne_prescription"
+            ),
+            champRecherche("catalogue", "Examen (catalogue)", "/catalogue-examens/", "catalogue"),
         ],
     },
 
@@ -217,13 +266,13 @@ window.SIHLConfigs = {
         description: "Valeur, unité, détection automatique hors référence.",
         endpoint: "/resultats-examens/",
         colonnes: [
-            { cle: "examen", label: "ID Examen" },
+            colonneFk("examen", "Examen", "/examens-labo/", "examen"),
             { cle: "valeur", label: "Valeur" },
             { cle: "unite", label: "Unité" },
             { cle: "hors_reference", label: "Hors référence", format: (v) => (v ? "⚠ Oui" : "Non") },
         ],
         champs: [
-            { cle: "examen", label: "ID Examen", type: "number", requis: true },
+            champRecherche("examen", "Examen", "/examens-labo/", "examen"),
             { cle: "valeur", label: "Valeur", requis: true },
             { cle: "unite", label: "Unité" },
             { cle: "critique", label: "Valeur critique", type: "checkbox" },
@@ -257,13 +306,13 @@ window.SIHLConfigs = {
         description: "Stock physique réel : péremption et quantité par lot.",
         endpoint: "/lots-pharmaceutiques/",
         colonnes: [
-            { cle: "medicament", label: "ID Médicament" },
+            colonneFk("medicament", "Médicament", "/medicaments/", "medicament"),
             { cle: "numero_lot", label: "N° de lot" },
             { cle: "date_peremption", label: "Péremption", format: dateCourte },
             { cle: "quantite_restante", label: "Qté restante" },
         ],
         champs: [
-            { cle: "medicament", label: "ID Médicament", type: "number", requis: true },
+            champRecherche("medicament", "Médicament", "/medicaments/", "medicament"),
             { cle: "numero_lot", label: "Numéro de lot", requis: true },
             { cle: "date_peremption", label: "Date de péremption", type: "date", requis: true },
             { cle: "quantite_initiale", label: "Quantité reçue", type: "number", requis: true },
@@ -276,13 +325,13 @@ window.SIHLConfigs = {
         description: "Entrées, sorties (dispensation), ajustements d'inventaire.",
         endpoint: "/mouvements-stock/",
         colonnes: [
-            { cle: "lot", label: "ID Lot" },
+            colonneFk("lot", "Lot", "/lots-pharmaceutiques/", "lot"),
             { cle: "type_mouvement", label: "Type", badge: true },
             { cle: "quantite", label: "Quantité" },
             { cle: "date", label: "Date", format: dateHeureCourte },
         ],
         champs: [
-            { cle: "lot", label: "ID Lot", type: "number", requis: true },
+            champRecherche("lot", "Lot", "/lots-pharmaceutiques/", "lot"),
             {
                 cle: "type_mouvement",
                 label: "Type",
@@ -323,15 +372,15 @@ window.SIHLConfigs = {
         description: "Rattachement à l'épisode, exonérations tracées.",
         endpoint: "/actes-factures/",
         colonnes: [
-            { cle: "episode", label: "ID Épisode" },
-            { cle: "tarif", label: "ID Tarif" },
+            colonneFk("episode", "Épisode", "/episodes/", "episode"),
+            colonneFk("tarif", "Tarif", "/tarifs-actes/", "tarif"),
             { cle: "quantite", label: "Qté" },
             { cle: "montant", label: "Montant", format: montant },
             { cle: "exoneration", label: "Exonéré", format: (v) => (v ? "Oui" : "Non") },
         ],
         champs: [
-            { cle: "episode", label: "ID Épisode", type: "number", requis: true },
-            { cle: "tarif", label: "ID Tarif", type: "number", requis: true },
+            champRecherche("episode", "Épisode", "/episodes/", "episode"),
+            champRecherche("tarif", "Tarif", "/tarifs-actes/", "tarif"),
             { cle: "quantite", label: "Quantité", type: "number", requis: true },
             { cle: "exoneration", label: "Exonération", type: "checkbox" },
             { cle: "motif_exoneration", label: "Motif d'exonération" },
@@ -344,13 +393,13 @@ window.SIHLConfigs = {
         endpoint: "/paiements/",
         colonnes: [
             { cle: "numero_recu", label: "N° Reçu" },
-            { cle: "episode", label: "ID Épisode" },
+            colonneFk("episode", "Épisode", "/episodes/", "episode"),
             { cle: "montant", label: "Montant", format: montant },
             { cle: "mode", label: "Mode", badge: true },
             { cle: "date", label: "Date", format: dateHeureCourte },
         ],
         champs: [
-            { cle: "episode", label: "ID Épisode", type: "number", requis: true },
+            champRecherche("episode", "Épisode", "/episodes/", "episode"),
             { cle: "montant", label: "Montant (FCFA)", type: "number", requis: true },
             {
                 cle: "mode",
@@ -403,12 +452,12 @@ window.SIHLConfigs = {
         description: "Plan des lits en temps réel par service.",
         endpoint: "/lits/",
         colonnes: [
-            { cle: "service", label: "ID Service" },
+            colonneFk("service", "Service", "/services/", "service"),
             { cle: "numero", label: "Numéro" },
             { cle: "statut", label: "Statut", badge: true },
         ],
         champs: [
-            { cle: "service", label: "ID Service", type: "number", requis: true },
+            champRecherche("service", "Service", "/services/", "service"),
             { cle: "numero", label: "Numéro de lit", requis: true },
         ],
     },
@@ -418,15 +467,15 @@ window.SIHLConfigs = {
         description: "Admission, affectation lit, sortie avec mode et diagnostic.",
         endpoint: "/sejours/",
         colonnes: [
-            { cle: "episode", label: "ID Épisode" },
-            { cle: "lit", label: "ID Lit" },
+            colonneFk("episode", "Épisode", "/episodes/", "episode"),
+            colonneFk("lit", "Lit", "/lits/", "lit"),
             { cle: "date_admission", label: "Admission", format: dateHeureCourte },
             { cle: "date_sortie", label: "Sortie", format: dateHeureCourte },
             { cle: "mode_sortie", label: "Mode de sortie", badge: true },
         ],
         champs: [
-            { cle: "episode", label: "ID Épisode", type: "number", requis: true },
-            { cle: "lit", label: "ID Lit", type: "number", requis: true },
+            champRecherche("episode", "Épisode", "/episodes/", "episode"),
+            champRecherche("lit", "Lit", "/lits/", "lit"),
             { cle: "date_admission", label: "Date d'admission", type: "datetime-local", requis: true },
         ],
     },
@@ -436,12 +485,12 @@ window.SIHLConfigs = {
         description: "Prescriptions et soins quotidiens du séjour.",
         endpoint: "/soins-quotidiens/",
         colonnes: [
-            { cle: "sejour", label: "ID Séjour" },
+            colonneFk("sejour", "Séjour", "/sejours/", "sejour"),
             { cle: "date_heure", label: "Date", format: dateHeureCourte },
             { cle: "description", label: "Description" },
         ],
         champs: [
-            { cle: "sejour", label: "ID Séjour", type: "number", requis: true },
+            champRecherche("sejour", "Séjour", "/sejours/", "sejour"),
             { cle: "date_heure", label: "Date et heure", type: "datetime-local", requis: true },
             { cle: "description", label: "Description", type: "textarea", requis: true },
         ],

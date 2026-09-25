@@ -37,13 +37,18 @@ const PageConnexion = {
     template: `
     <div class="ecran-connexion">
         <form class="carte carte--connexion" @submit.prevent="soumettre">
-            <h1>SIHL</h1>
-            <p class="page-crud__soustitre">Système d'Information Hospitalier Léger</p>
+            <div class="ecran-connexion__marque">
+                <span class="ecran-connexion__logo">S</span>
+                <div>
+                    <h1>SIHL</h1>
+                    <p class="page-crud__soustitre">Système d'Information Hospitalier Léger</p>
+                </div>
+            </div>
             <label>Identifiant
-                <input v-model="identifiant" required autofocus />
+                <input v-model="identifiant" required autofocus autocomplete="username" />
             </label>
             <label>Mot de passe
-                <input v-model="motDePasse" type="password" required />
+                <input v-model="motDePasse" type="password" required autocomplete="current-password" />
             </label>
             <p v-if="erreur" class="alerte alerte--erreur">{{ erreur }}</p>
             <button class="btn btn--primaire btn--large" type="submit" :disabled="enCours">
