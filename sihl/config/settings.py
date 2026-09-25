@@ -150,3 +150,7 @@ DOUBLON_POIDS_NAISSANCE = env.float("DOUBLON_POIDS_NAISSANCE", default=0.15)
 
 # Code établissement utilisé dans le préfixe IPP (CCC-AAAA-NNNNNN-K).
 CODE_ETABLISSEMENT = env("CODE_ETABLISSEMENT", default="SIH")
+
+# Chapitre 3.9 : "verrouillage après échecs répétés".
+MAX_ECHECS_AUTHENTIFICATION = env.int("MAX_ECHECS_AUTHENTIFICATION", default=5)
+DUREE_VERROUILLAGE_MINUTES = env.int("DUREE_VERROUILLAGE_MINUTES", default=15)

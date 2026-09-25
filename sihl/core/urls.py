@@ -11,4 +11,6 @@ router.register("journal-audit", views.JournalAuditViewSet, basename="journal-au
 urlpatterns = [
     path("", include(router.urls)),
     path("moi/", views.moi, name="moi"),
+    path("connexion/", views.connexion, name="connexion"),
+    path("deconnexion/", views.deconnexion, name="deconnexion"),
 ]

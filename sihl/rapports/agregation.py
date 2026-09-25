@@ -12,6 +12,7 @@ from __future__ import annotations
 import datetime
 
 from django.db.models import Count, Sum
+from django.utils import timezone
 
 from sihl.consultations.models import Consultation, Diagnostic
 from sihl.episodes.models import EpisodeDeSoins
@@ -20,8 +21,9 @@ from sihl.hospitalisation.models import Sejour
 
 
 def rapport_mensuel(annee: int, mois: int) -> dict:
-    debut = datetime.date(annee, mois, 1)
-    fin = datetime.date(annee + (mois == 12), (mois % 12) + 1, 1)
+    debut = timezone.make_aware(datetime.datetime(annee, mois, 1))
+    annee_fin, mois_fin = (annee + 1, 1) if mois == 12 else (annee, mois + 1)
+    fin = timezone.make_aware(datetime.datetime(annee_fin, mois_fin, 1))
 
     consultations = Consultation.objects.filter(date__gte=debut, date__lt=fin)
     episodes = EpisodeDeSoins.objects.filter(date_ouverture__gte=debut, date_ouverture__lt=fin)
